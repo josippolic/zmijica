@@ -1,13 +1,14 @@
-﻿#include <stdio.h>
+//moduli
+#include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
 #include <windows.h>
 #include <time.h>
+#include <string.h>
 
 #define WIDTH 40
-#define HEIGHT 20
+#define HEIGHT 20  
 
-// Struktura točke
 typedef struct {
     int x, y;
 } Point;
@@ -18,15 +19,13 @@ int snakeLength = 3;
 int dx = 1, dy = 0;
 Point food;
 int score = 0;
-int delay = 150;
+int delay = 150; // konstantna brzina
 int lives = 3;
 
-// Brisanje ekrana
-void clearScreen() {
-    printf("\033[2J\033[H");
-}
+char playerName[50];
+time_t startTime;
 
-// Postavljanje kursora
+// Pomicanje kursora
 void gotoxy(int x, int y) {
     COORD c;
     c.X = x;
@@ -70,10 +69,15 @@ void placeFood() {
 
 // Crtanje
 void draw() {
-    clearScreen();
+    gotoxy(0, 0);
 
+    // 1. red: ime i prezime
+    printf("Igrac: %s\n", playerName);
+
+    // 2. red: score, lives, speed
     printf("Score: %d   Lives: %d   Speed: %dms\n", score, lives, delay);
 
+    // Ostatak ekrana
     for (int x = 0; x < WIDTH + 2; x++) printf("#");
     printf("\n");
 
@@ -101,8 +105,6 @@ void draw() {
 
     for (int x = 0; x < WIDTH + 2; x++) printf("#");
     printf("\n");
-
-    printf("\033[0m"); // reset boja
 }
 
 // Logika tipki
@@ -116,6 +118,19 @@ void input() {
         case 'q': exit(0);
         }
     }
+}
+
+// Spremanje rezultata
+void saveScore() {
+    FILE* f = fopen("score.txt", "a");
+    if (!f) return;
+
+    int timeSpent = (int)(time(NULL) - startTime);
+
+    fprintf(f, "Igrac: %s | Score: %d | Lives: %d | Vrijeme: %d sekundi\n",
+        playerName, score, lives, timeSpent);
+
+    fclose(f);
 }
 
 // Logika igre
@@ -132,7 +147,9 @@ void update() {
     {
         lives--;
         if (lives <= 0) {
-            printf("GAME OVER! Score: %d\n", score);
+            gotoxy(0, HEIGHT + 5);
+            printf("Gotova igra!Pokus   aj ponovno! Score: %d\n", score);
+            saveScore();
             exit(0);
         }
         resetSnake();
@@ -142,7 +159,9 @@ void update() {
     // Sudar sa sobom
     for (int i = 1; i < snakeLength; i++) {
         if (snake[0].x == snake[i].x && snake[0].y == snake[i].y) {
-            printf("GAME OVER! Score: %d\n", score);
+            gotoxy(0, HEIGHT + 5);
+            printf("Gotova igra! Pokusaj ponovno! Score: %d\n", score);
+            saveScore();
             exit(0);
         }
     }
@@ -152,18 +171,38 @@ void update() {
         snakeLength++;
         score++;
 
-        delay -= 5;
-        if (delay < 40) delay = 40;
+        // uklonjena promjena delay da brzina ostane konstantna
 
         placeFood();
     }
 }
 
 int main() {
+
     srand(time(NULL));
+
+    printf("Upisi ime i prezime: ");
+    fgets(playerName, sizeof(playerName), stdin);
+    playerName[strcspn(playerName, "\n")] = 0;
+
+    // Popravak ghost-character bug Visual Studia
+    for (int i = 0; playerName[i] != '\0'; i++) {
+        if (playerName[i] < 32 || playerName[i] > 126) {
+            playerName[i] = '\0';
+            break;
+        }
+    }
+
+    startTime = time(NULL);
 
     resetSnake();
     placeFood();
+
+    // Sakrij kursor da izgleda bolje
+    CONSOLE_CURSOR_INFO cursor;
+    cursor.bVisible = FALSE;
+    cursor.dwSize = 1;
+    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursor);
 
     while (1) {
         input();
