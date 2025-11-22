@@ -135,7 +135,7 @@ void input() {
             if (c == 72 && dy == 0) { dx = 0; dy = -1; } // ↑
             if (c == 80 && dy == 0) { dx = 0; dy = 1; }  // ↓
             if (c == 75 && dx == 0) { dx = -1; dy = 0; } // ←
-            if (c == 77 && dx == 0) { dx = 1; dy = 0; }  // →
+            if (c == 77 && dx == 0) { dx = 1; dy = 0; }  // → 
             return;
         }
 
@@ -154,7 +154,7 @@ void input() {
 // SPREMANJE SCOREA
 // --------------------
 void saveScore() {
-    FILE* f = fopen("C:\\Users\\Dark Prince\\source\\repos\\zmija9\\x64\\Debug\\score.txt", "a");
+    FILE* f = fopen("C:\\Users\\Dark Prince\\source\\repos\\zmija12\\x64\\Debug\\score.txt", "a");
     if (!f) return;
 
     int t = (int)(time(NULL) - startTime);
@@ -168,6 +168,7 @@ void saveScore() {
 // -------------------------------------------------------
 
 void update() {
+    // Pomak tijela unazad
     for (int i = snakeLength - 1; i > 0; i--)
         snake[i] = snake[i - 1];
 
@@ -205,6 +206,14 @@ void update() {
     // hrana
     if (snake[0].x == food.x && snake[0].y == food.y) {
         Beep(600, 80);
+
+        // Dodaj novi segment odmah iza glave
+        for (int i = snakeLength; i > 0; i--)
+            snake[i] = snake[i - 1];
+
+        snake[1].x = snake[0].x - dx;
+        snake[1].y = snake[0].y - dy;
+
         snakeLength++;
         score++;
         placeFood();
